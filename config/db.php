@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-$host = $_ENV['DB_HOST'] ?? '172.20.35.160';
+$host = $_ENV['DB_HOST'] ?? '10.181.55.160';
 $db   = $_ENV['DB_NAME'] ?? 'enrollment_profiling_db';
 $user = $_ENV['DB_USER'] ?? 'usat_admin';
 $pass = $_ENV['DB_PASS'] ?? 'abc_123';   
 
-if (php_sapi_name() === 'cli' || strpos($_SERVER['HTTP_HOST'] ?? '', '172.20.35.160') !== false) {
+if (php_sapi_name() === 'cli' || strpos($_SERVER['HTTP_HOST'] ?? '', '10.181.55.160') !== false) {
 } else {
     if (empty($pass) || $user === 'admin') {
         error_log("Database credentials not properly set via environment variables.");
