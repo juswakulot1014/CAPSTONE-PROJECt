@@ -1,41 +1,55 @@
 <?php
-declare(strict_types=1);
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-$host = $_ENV['DB_HOST'] ?? '10.181.55.160';
-$db   = $_ENV['DB_NAME'] ?? 'enrollment_profiling_db';
-$user = $_ENV['DB_USER'] ?? 'usat_admin';
-$pass = $_ENV['DB_PASS'] ?? 'abc_123';   
+// Database configuration
+define('DB_HOST', '10.0.31.5');
+define('DB_USER', 'usat_admin'); 
+define('DB_PASS', 'abc_123'); 
+define('DB_NAME', 'enrollment_profiling_db'); 
 
-if (php_sapi_name() === 'cli' || strpos($_SERVER['HTTP_HOST'] ?? '', '10.181.55.160') !== false) {
-} else {
-    if (empty($pass) || $user === 'admin') {
-        error_log("Database credentials not properly set via environment variables.");
-        die("Service unavailable. Please contact administrator.");
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+// Set charset to UTF-8
+$conn->set_charset("utf8mb4");
+
+// Only declare functions if they don't exist
+if (!function_exists('db_query')) {
+    function db_query($query) {
+        global $conn;
+        $result = $conn->query($query);
+        if ($conn->error) {
+            error_log("Database Error: " . $conn->error . " in query: " . $query);
+            return false;
+        }
+        return $result;
     }
 }
-mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-try {
-    $conn = new mysqli($host, $user, $pass, $db);
-    $conn->set_charset("utf8mb4");
-    $conn->options(MYSQLI_OPT_CONNECT_TIMEOUT, 10);
-
-} catch (mysqli_sql_exception $e) {
-    error_log("Database connection failed: " . $e->getMessage());
-   die("Connection failed: " . $e->getMessage());
+if (!function_exists('db_prepare')) {
+    function db_prepare($query) {
+        global $conn;
+        return $conn->prepare($query);
+    }
 }
-function db_query(mysqli $conn, string $sql, array $params = []): mysqli_stmt|false {
-    $stmt = $conn->prepare($sql);
-    if ($stmt === false) {
-        throw new mysqli_sql_exception($conn->error);
+
+if (!function_exists('db_escape')) {
+    function db_escape($string) {
+        global $conn;
+        return $conn->real_escape_string($string);
     }
-    
-    if (!empty($params)) {
-        $types = str_repeat('s', count($params));
-        $stmt->bind_param($types, ...$params);
+}
+
+if (!function_exists('db_get_last_id')) {
+    function db_get_last_id() {
+        global $conn;
+        return $conn->insert_id;
     }
-    
-    $stmt->execute();
-    return $stmt;
 }
 ?>
